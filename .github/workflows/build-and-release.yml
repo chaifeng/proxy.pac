@@ -25,27 +25,12 @@ jobs:
         chmod +x ./build.sh
         ./build.sh
 
-    - name: Get current date
-      id: get_date
-      run: echo "RELEASE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
+    - name: Create release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: "latest"
-        release_name: "Proxy PAC Release - ${{ env.RELEASE_DATE }}"
-        draft: false
-        prerelease: false
-
-    - name: Upload Proxy.pac to Release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        release_id: ${{ steps.create_release.outputs.id }}
-        asset_path: ./proxy.pac
-        asset_name: proxy.pac
-        asset_content_type: application/x-ns-proxy-autoconfig
+        sha: ${{ github.sha }}
+      run: |
+        gh release create "$tag" \
+            --repo="$GITHUB_REPOSITORY" \
+            --title="${GITHUB_REPOSITORY#*/} $(date '+%Y-%m-%d-')${sha:0:7}" \
+            ./proxy.pac
