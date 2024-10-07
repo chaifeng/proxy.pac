@@ -1,68 +1,68 @@
 # proxy.pac
 
-This project is designed to help you generate a `proxy.pac` file that can be used for configuring browser or system-wide proxy settings. You can define custom rules to route traffic based on the domains specified in your configuration files.
+这个项目用来生成代理自动配置 `proxy.pac` 文件，可以用于配置浏览器或系统级的代理设置。你可以自定义规则，根据配置文件中指定的域名来路由流量。
 
-## Usage
+## 使用方法
 
-1. **Domain Rules Configuration**
+1. **域名规则配置**
 
-   The project includes several example configuration files:
+   项目包含一些示例配置文件：
 
    - `domain-rules-blocked.txt.example`
    - `domain-rules-direct.txt.example`
    - `domain-rules-proxy.txt.example`
 
-   To use these, create your own versions of these files without the `.example` extension. Each file represents a different proxy behavior:
+   要使用这些文件，去掉 `.example` 扩展名。每个文件代表不同的代理行为：
 
-   - **Blocked**: Domains added to `domain-rules-blocked.txt` will be blocked.
-   - **Direct**: Domains added to `domain-rules-direct.txt` will bypass the proxy and connect directly.
-   - **Proxy**: Domains added to `domain-rules-proxy.txt` will use the default proxy.
+   - **Blocked**：添加到 `domain-rules-blocked.txt` 中的域名将被阻止访问。
+   - **Direct**：添加到 `domain-rules-direct.txt` 中的域名将绕过代理，直接连接。
+   - **Proxy**：添加到 `domain-rules-proxy.txt` 中的域名将使用默认代理。
 
-   Add your domains to the appropriate files, with each domain on a new line. Lines starting with `#` are treated as comments. For example:
+   将你的域名添加到合适的文件中，每个域名一行。以 `#` 开头的行被视为注释。例如：
 
    ```
-   # Direct connection domains
+   # 直连域名
    google.com
    example.org
    ```
 
-   You can also create your own custom rule files. The file name should follow the format `domain-rules-<rule_name>.txt`. For example, `domain-rules-companyProxy.txt` will make all domains in that file use the `companyProxy` setting defined in the `proxy.pac`.
+   你也可以创建自己的自定义规则文件，文件名应遵循 `domain-rules-<rule_name>.txt` 的格式。例如，`domain-rules-companyProxy.txt` 将使该文件中的所有域名使用 `proxy.pac` 中定义的 `companyProxy` 设置。
 
-2. **Build the `proxy.pac` File**
+2. **生成 `proxy.pac` 文件**
 
-   Run the build script to generate the `proxy.pac` file:
+   运行脚本生成 `proxy.pac` 文件：
 
    ```sh
    ./build.sh
    ```
 
-   This will create the `proxy.pac` file in the project root directory.
+   在项目根目录中会自动生成 `proxy.pac` 文件。
 
-3. **Proxy Configuration**
+3. **代理配置**
 
-   The generated `proxy.pac` file uses the following default proxy configurations (note that the default proxy server is `SOCKS5 127.0.0.1:1080`):
+   生成的 `proxy.pac` 文件使用以下默认的代理配置（注意默认代理服务器是 `SOCKS5 127.0.0.1:1080`）：
 
    ```javascript
    var proxyBehaviors = {
-     proxy: "SOCKS5 127.0.0.1:1080", // the default proxy
+     proxy: "SOCKS5 127.0.0.1:1080", // 默认代理
      direct: DIRECT,
      blocked: "PROXY 0.0.0.0:0",
      "http_proxy": "PROXY 127.0.0.1:3128",
-     "companyProxy": "PROXY 192.168.1.1:8080", // domains list in `domain-rules-companyProxy.txt` will use this proxy setting
+     "companyProxy": "PROXY 192.168.1.1:8080", // `domain-rules-companyProxy.txt` 中的域名将使用此代理设置
    };
    ```
 
-   You can modify these values in the `proxy.pac` file after it's generated, or customize them directly in the script if you need different default settings. Please adjust these proxy settings to match your actual environment and requirements.
+   你可以在生成 `proxy.pac` 后修改这些值，或者直接在原始脚本 `proxy.js` 中进行自定义，以便使用不同的默认设置。请根据实际环境和需求调整这些代理设置。
 
-4. **Test**
+4. **测试**
 
-   If you have Node.js installed, you can run a test to verify your configuration by using the following command:
+   如果安装了 Node.js，可以使用以下命令运行测试以验证配置：
 
    ```sh
    node proxy.pac test
    ```
 
-   The test code is located at the end of the `proxy.pac` file, for example:
+   测试代码位于 `proxy.pac` 文件的末尾，例如：
 
    ```javascript
    assertVisitHostWithProxy("com.google");
@@ -73,17 +73,17 @@ This project is designed to help you generate a `proxy.pac` file that can be use
    assertBlockedHost("www.whitehouse.com");
    ```
 
-## Example
+## 示例
 
-To add a domain to be blocked, simply edit `domain-rules-blocked.txt`:
+要添加一个需要被阻止的域名，只需编辑 `domain-rules-blocked.txt` 文件：
 
 ```
-# Blocked domains
+# 被阻止的域名
 example.com
 ads.example.net
 ```
 
-After running `./build.sh`, the generated `proxy.pac` will block access to `example.com` and `ads.example.net`.
+运行 `./build.sh` 重新生成的 `proxy.pac` 将阻止访问 `example.com` 和 `ads.example.net`。
 
 ## License
 
