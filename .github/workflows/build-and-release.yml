@@ -30,7 +30,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         sha: ${{ github.sha }}
       run: |
-        gh release create "$tag" \
+        gh release create "$(date '+%Y-%m-%d-')${sha:0:7}" \
             --repo="$GITHUB_REPOSITORY" \
             --title="${GITHUB_REPOSITORY#*/} $(date '+%Y-%m-%d-')${sha:0:7}" \
             ./proxy.pac
