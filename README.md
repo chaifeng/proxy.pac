@@ -40,7 +40,7 @@ For high-performance matching: Uses a hash table for domain rules, and an IP pre
 
    Add your domain names or IP network segments to the appropriate file, with one entry per line. Lines starting with `#` are treated as comments. For example:
 
-   Domains added to `domain-rules-direct.txt` will bypass the proxy and connect directly:
+   Domains added to `domain-rules-direct.txt`, along with their subdomains,  will bypass the proxy and connect directly:
    ```
    # Direct connect domains
    google.com
@@ -161,7 +161,7 @@ Run `./build.sh` to regenerate the `proxy.pac` file, which will block access to 
 
    将你的域名或者IP网络段添加到合适的文件中，每个域名一行。以 `#` 开头的行被视为注释。例如：
 
-   文件 domain-rules-direct.txt 中添加的域名将会绕过代理直接连接
+   文件 domain-rules-direct.txt 中添加的域名及其子域名将会绕过代理直接连接
    ```
    # 直连域名
    google.com
