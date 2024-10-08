@@ -1,7 +1,4 @@
 .DS_Store
-china.txt
-china6.txt
-gfwlist.txt
-auto-proxy.txt
-domain-rules-*.txt
+auto-proxy*.txt
+*-rules-*.txt
 proxy.pac

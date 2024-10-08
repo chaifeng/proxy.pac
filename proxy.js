@@ -21,10 +21,6 @@ function isIpAddress(host) {
   return ipv4Pattern.test(host) || ipv6Pattern.test(host);
 }
 
-function isInDirectAccessNetwork(ip) {
-  return !!findMatchingNetwork(ip, directAccessIPv4Networks, directAccessIPv6Networks);
-}
-
 function ipToNumber(ip) {
   const parts = ip.split('.');
   return parts.reduce((acc, part) => (acc << 8) + parseInt(part, 10), 0);
@@ -65,172 +61,21 @@ function twoNumbersToIpv6(high, low) {
   return parts.join(':').replace(/(:0{1,4}){2,}/, '::');
 }
 
-function findMatchingNetwork(ip, networks4, networks6) {
-  if (ip.includes('.')) { // IPv4
-    const ipNumber = ipToNumber(ip);
-    for (let [network, prefix] of networks4) {
-      mask = subnetMaks32[prefix]
-      if ((ipNumber & mask) === (network & mask)) {
-        return [network, prefix];
-      }
-    }
-  } else { // IPv6
-    const [ipHigh, ipLow] = ipv6ToTwoNumbers(ip);
-    for (let [networkHigh, networkLow, mask] of networks6) {
-      if (mask>64) {
-        maskHigh = 0xffffffffffffffffn;
-        maskLow = subnetMaks64[mask-64];
-      } else {
-        maskHigh = subnetMaks64[mask];
-        maskLow = 0x0000000000000000n;
-      }
-      if (((ipHigh & maskHigh) === (networkHigh & maskHigh)) &&
-        ((ipLow & maskLow) === (networkLow & maskLow))) {
-        return [networkHigh, networkLow, mask];
-      }
-    }
-  }
-  return null;
-}
-
-function printMatchingNetwork(ip, networks4, networks6) {
-  const matchedNetwork = findMatchingNetwork(ip, networks4, networks6);
-  if (matchedNetwork) {
-    if (ip.includes('.')) { // IPv4
-      const [network, prefixLength] = matchedNetwork;
-      return `${numberToIp(network)}/${prefixLength}`;
-    } else { // IPv6
-      const [networkHigh, networkLow, prefixLength] = matchedNetwork;
-      return `${twoNumbersToIpv6(networkHigh, networkLow)}/${prefixLength}`;
-    }
-  } else {
-    return null;
-  }
-}
-
-const subnetMaks32 = [
-  0x00000000, // 0
-  0x80000000, // 1
-  0xc0000000, // 2
-  0xe0000000, // 3
-  0xf0000000, // 4
-  0xf8000000, // 5
-  0xfc000000, // 6
-  0xfe000000, // 7
-  0xff000000, // 8
-  0xff800000, // 9
-  0xffc00000, // 10
-  0xffe00000, // 11
-  0xfff00000, // 12
-  0xfff80000, // 13
-  0xfffc0000, // 14
-  0xfffe0000, // 15
-  0xffff0000, // 16
-  0xffff8000, // 17
-  0xffffc000, // 18
-  0xffffe000, // 19
-  0xfffff000, // 20
-  0xfffff800, // 21
-  0xfffffc00, // 22
-  0xfffffe00, // 23
-  0xffffff00, // 24
-  0xffffff80, // 25
-  0xffffffc0, // 26
-  0xffffffe0, // 27
-  0xfffffff0, // 28
-  0xfffffff8, // 29
-  0xfffffffc, // 30
-  0xfffffffe, // 31
-  0xffffffff, // 32
-];
-
-const subnetMaks64 = [
-  0x0000000000000000n, // 0
-  0x8000000000000000n, // 1
-  0xc000000000000000n, // 2
-  0xe000000000000000n, // 3
-  0xf000000000000000n, // 4
-  0xf800000000000000n, // 5
-  0xfc00000000000000n, // 6
-  0xfe00000000000000n, // 7
-  0xff00000000000000n, // 8
-  0xff80000000000000n, // 9
-  0xffc0000000000000n, // 10
-  0xffe0000000000000n, // 11
-  0xfff0000000000000n, // 12
-  0xfff8000000000000n, // 13
-  0xfffc000000000000n, // 14
-  0xfffe000000000000n, // 15
-  0xffff000000000000n, // 16
-  0xffff800000000000n, // 17
-  0xffffc00000000000n, // 18
-  0xffffe00000000000n, // 19
-  0xfffff00000000000n, // 20
-  0xfffff80000000000n, // 21
-  0xfffffc0000000000n, // 22
-  0xfffffe0000000000n, // 23
-  0xffffff0000000000n, // 24
-  0xffffff8000000000n, // 25
-  0xffffffc000000000n, // 26
-  0xffffffe000000000n, // 27
-  0xfffffff000000000n, // 28
-  0xfffffff800000000n, // 29
-  0xfffffffc00000000n, // 30
-  0xfffffffe00000000n, // 31
-  0xffffffff00000000n, // 32
-  0xffffffff80000000n, // 33
-  0xffffffffc0000000n, // 34
-  0xffffffffe0000000n, // 35
-  0xfffffffff0000000n, // 36
-  0xfffffffff8000000n, // 37
-  0xfffffffffc000000n, // 38
-  0xfffffffffe000000n, // 39
-  0xffffffffff000000n, // 40
-  0xffffffffff800000n, // 41
-  0xffffffffffc00000n, // 42
-  0xffffffffffe00000n, // 43
-  0xfffffffffff00000n, // 44
-  0xfffffffffff80000n, // 45
-  0xfffffffffffc0000n, // 46
-  0xfffffffffffe0000n, // 47
-  0xffffffffffff0000n, // 48
-  0xffffffffffff8000n, // 49
-  0xffffffffffffc000n, // 50
-  0xffffffffffffe000n, // 51
-  0xfffffffffffff000n, // 52
-  0xfffffffffffff800n, // 53
-  0xfffffffffffffc00n, // 54
-  0xfffffffffffffe00n, // 55
-  0xffffffffffffff00n, // 56
-  0xffffffffffffff80n, // 57
-  0xffffffffffffffc0n, // 58
-  0xffffffffffffffe0n, // 59
-  0xfffffffffffffff0n, // 60
-  0xfffffffffffffff8n, // 61
-  0xfffffffffffffffcn, // 62
-  0xfffffffffffffffen, // 63
-  0xffffffffffffffffn, // 64
-];
-
-const directAccessIPv4Networks = [
-  [0xC0A80000, 16], // 192.168.0.0/16
-  [0x0A000000, 8], // 10.0.0.0/8
-  [0xAC100000, 12], // 172.16.0.0/12
-  [0x7F000000, 8], // 127.0.0.0/8 (Loopback)
-  [0xA9FE0000, 16], // 169.254.0.0/16 (Link Local)
-  [0x64400000, 10], // 100.64.0.0/10 (Carrier-grade NAT)
+const ipv4NetworkRules = [
+  [0x7F000000, 8 , direct], // 127.0.0.0/8 (Loopback)
+  [0xA9FE0000, 16, direct], // 169.254.0.0/16 (Link Local)
+  [0x64400000, 10, direct], // 100.64.0.0/10 (Carrier-grade NAT)
   // begin of ipv4 networks
   // end of ipv4 networks
 ];
 
-const directAccessIPv6Networks = [
-  [0x0000000000000000n, 0x0000000000000000n, 128], // ::/128 (Unspecified Address)
-  [0x0000000000000000n, 0x0000000000000001n, 128], // ::1/128 (Loopback Address)
-  [0x20010db800000000n, 0x0000000000000000n, 32], // 2001:db8::/32 (Documentation Address)
-  [0xfc00000000000000n, 0x0000000000000000n, 7], // fc00::/7 (Unique Local Address)
-  [0xff00000000000000n, 0x0000000000000000n, 8], // ff00::/8 (Multicast Address)
-  [0x2001000000000000n, 0x0000000000000000n, 16], // 2001::/16 (Teredo Address)
-  [0xfe80000000000000n, 0x0000000000000000n, 10], // fe80::/10 (Link-Local Address)
+const ipv6NetworkRules = [
+  [0x0000000000000000n, 0x0000000000000000n, 128, direct], // ::/128 (Unspecified Address)
+  [0x0000000000000000n, 0x0000000000000001n, 128, direct], // ::1/128 (Loopback Address)
+  [0xfc00000000000000n, 0x0000000000000000n, 7  , direct], // fc00::/7 (Unique Local Address)
+  [0xff00000000000000n, 0x0000000000000000n, 8  , direct], // ff00::/8 (Multicast Address)
+  [0x2001000000000000n, 0x0000000000000000n, 16 , direct], // 2001::/16 (Teredo Address)
+  [0xfe80000000000000n, 0x0000000000000000n, 10 , direct], // fe80::/10 (Link-Local Address)
   // begin of ipv6 networks
   // end of ipv6 networks
 ];
@@ -244,10 +89,194 @@ const proxyRules = {
   // end of proxy rules
 };
 
+class IPv4TrieNode {
+  constructor() {
+    this.children = [null, null]; // 0 and 1
+    this.isEnd = false;
+    this.network = null;
+    this.prefix = null;
+    this.action = direct;
+  }
+}
+
+class IPv4PrefixTrie {
+  constructor() {
+    this.root = new IPv4TrieNode();
+  }
+
+  static buildTrieFromData(data) {
+    const trie = new IPv4PrefixTrie();
+    for (const [network, prefix, action] of data) {
+      let node = trie.root;
+      node = IPv4PrefixTrie._insertBits(node, network, prefix);
+      node.isEnd = true;
+      node.network = network;
+      node.prefix = prefix;
+      node.action = action
+    }
+    return trie;
+  }
+
+  static _insertBits(node, value, bits) {
+    let mask = 0x80000000;
+    for (let i = 0; i < bits; i++) {
+      const bitIndex = ((value & mask) !== 0 ? 1 : 0);
+      mask = mask >>> 1;
+
+      if (!node.children[bitIndex]) {
+        node.children[bitIndex] = new IPv4TrieNode();
+      }
+      node = node.children[bitIndex];
+    }
+    return node;
+  }
+
+  search(ip) {
+    let node = this.root;
+    let lastMatch = null;
+
+    node = IPv4PrefixTrie._searchBits(node, ip, 32, (matchedNode) => {
+      if (matchedNode.isEnd) {
+        lastMatch = matchedNode;
+      }
+    });
+
+    return lastMatch;
+  }
+
+  static _searchBits(node, value, bits, callback) {
+    let mask = 0x80000000;
+    for (let i = 0; i < bits; i++) {
+      const bitIndex = ((value & mask) !== 0 ? 1 : 0);
+      mask = mask >>> 1;
+
+      if (!node.children[bitIndex]) {
+        return null;
+      }
+      node = node.children[bitIndex];
+      callback(node);
+    }
+    return node;
+  }
+}
+
+class IPv6TrieNode {
+  constructor() {
+    this.children = [null, null]; // 0 and 1
+    this.isEnd = false;
+    this.networkHigh = null;
+    this.networkLow = null;
+    this.prefix = null;
+    this.action = direct;
+  }
+}
+
+class IPv6PrefixTrie {
+  constructor() {
+    this.root = new IPv6TrieNode();
+  }
+
+  static buildTrieFromData(data) {
+    const trie = new IPv6PrefixTrie();
+    for (const [networkHigh, networkLow, prefix, action] of data) {
+      let node = trie.root;
+      node = IPv6PrefixTrie._insertBits(node, networkHigh, Math.min(prefix, 64));
+      if (prefix > 64) {
+        node = IPv6PrefixTrie._insertBits(node, networkLow, prefix - 64);
+      }
+      node.isEnd = true;
+      node.networkHigh = networkHigh;
+      node.networkLow = networkLow;
+      node.prefix = prefix;
+      node.action = action;
+    }
+    return trie;
+  }
+
+  static _insertBits(node, value, bits) {
+    let mask = 0x8000000000000000n;
+    for (let i = 0; i < bits; i++) {
+      const bitIndex = ((value & mask) !== 0n ? 1 : 0);
+      mask = mask >> 1n;
+
+      if (!node.children[bitIndex]) {
+        node.children[bitIndex] = new IPv6TrieNode();
+      }
+      node = node.children[bitIndex];
+    }
+    return node;
+  }
+
+  search(ipHigh, ipLow) {
+    let node = this.root;
+    let lastMatch = null;
+
+    node = IPv6PrefixTrie._searchBits(node, ipHigh, 64, (matchedNode) => {
+      if (matchedNode.isEnd) {
+        lastMatch = matchedNode;
+      }
+    });
+
+    if (node) {
+      node = IPv6PrefixTrie._searchBits(node, ipLow, 64, (matchedNode) => {
+        if (matchedNode.isEnd) {
+          lastMatch = matchedNode;
+        }
+      });
+    }
+
+    return lastMatch;
+  }
+
+  static _searchBits(node, value, bits, callback) {
+    let mask = 0x8000000000000000n;
+    for (let i = 0; i < bits; i++) {
+      const bitIndex = ((value & mask) !== 0n ? 1 : 0);
+      mask = mask >> 1n;
+
+      if (!node.children[bitIndex]) {
+        return null;
+      }
+      node = node.children[bitIndex];
+      callback(node);
+    }
+    return node;
+  }
+}
+
+const ipv4Trie = IPv4PrefixTrie.buildTrieFromData(ipv4NetworkRules);
+const ipv6Trie = IPv6PrefixTrie.buildTrieFromData(ipv6NetworkRules);
+
+function findMatchingNetwork(ip, networks4, networks6) {
+  if (ip.includes('.')) { // IPv4
+    const ipNumber = ipToNumber(ip);
+    return ipv4Trie.search(ipNumber);
+  } else { // IPv6
+    const [ipHigh, ipLow] = ipv6ToTwoNumbers(ip);
+    return ipv6Trie.search(ipHigh, ipLow);
+  }
+  return null;
+}
+
+function printMatchingNetwork(ip, networks4, networks6) {
+  const matchedNetwork = findMatchingNetwork(ip, networks4, networks6);
+  if (matchedNetwork) {
+    if (ip.includes('.')) { // IPv4
+      const trie = matchedNetwork;
+      return `${numberToIp(trie.network)}/${trie.prefix}`;
+    } else { // IPv6
+      const trie = matchedNetwork;
+      return `${twoNumbersToIpv6(trie.networkHigh, trie.networkLow)}/${trie.prefix}`;
+    }
+  } else {
+    return null;
+  }
+}
 function FindProxyForURL(url, host) {
   if (isIpAddress(host)) {
-    if(isInDirectAccessNetwork(host)) {
-      return DIRECT;
+    const match = findMatchingNetwork(host);
+    if(match) {
+      return proxyBehaviors[match.action] || default_behavior;
     } else {
       var action = proxyRules[host];
       if (action !== undefined) {
@@ -274,15 +303,16 @@ function FindProxyForURL(url, host) {
   } else if(typeof dnsResolve == 'function') {
     remote_ip = dnsResolve(host);
   }
-  if(remote_ip !== undefined && isInDirectAccessNetwork(remote_ip)) {
-    return DIRECT
+  if(remote_ip !== undefined) {
+    const match = findMatchingNetwork(remote_ip);
+    if (match) return proxyBehaviors[match.action] || default_behavior;
   }
   return default_behavior;
 }
 
 if (typeof process !== 'undefined' && process.argv.includes('test')) {
   function assertNetwork(ip, expected) {
-    const result = printMatchingNetwork(ip, directAccessIPv4Networks, directAccessIPv6Networks);
+    const result = printMatchingNetwork(ip, ipv4NetworkRules, ipv6NetworkRules);
     if (result === expected) {
       console.log(`OK: Test for ${ip} passed.`);
     } else {
@@ -316,15 +346,13 @@ if (typeof process !== 'undefined' && process.argv.includes('test')) {
   }
 
   function runTests() {
-    assertNetwork("192.168.1.10", "192.168.0.0/16");
+    assertNetwork("127.234.168.10", "127.0.0.0/8");
     assertNetwork("1.1.1.1", null);
-    assertNetwork("172.19.1.1", "172.16.0.0/12");
-    assertNetwork("2001:0db8:85a3:0000:0000:8a2e:0370:7334", "2001:db8::/32");
     assertNetwork("fe80::f0:c6b3:c766:9b1e", "fe80::/10");
     assertVisitHostWithProxy("com.google");
     assertVisitHostWithProxy("domains.google");
     assertHostWithDefaultAction("www.not-google");
-    assertDirectHost("10.3.4.5");
+    assertDirectHost("127.3.4.5");
     assertDirectHost("114.114.114.114");
     assertBlockedHost("www.whitehouse.com");
   }
