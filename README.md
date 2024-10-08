@@ -1,5 +1,130 @@
 # proxy.pac
 
+- [English](#proxy.pac)
+- [中文](#中文介绍)
+- [License](#license)
+
+This project is used to generate the proxy auto-configuration `proxy.pac` file, which can be used for configuring browser or system-level proxy settings.
+
+Supports routing traffic through proxies: You can customize rules to route traffic to different proxy servers based on domain names or IP networks specified in the configuration files.
+
+For high-performance matching: Uses a hash table for domain rules, and an IP prefix tree for fast matching of network rules. If there is no domain match, the IP address will be resolved and then matched against network rules.
+
+## Usage
+
+1. **Domain Rule Configuration**
+
+   The project contains some example configuration files:
+
+   - `auto-proxy.txt.example`
+   - `domain-rules-blocked.txt.example`
+   - `domain-rules-direct.txt.example`
+   - `domain-rules-proxy.txt.example`
+   - `ipv4-rules-direct.txt.example`
+   - `ipv6-rules-direct.txt.example`
+
+   To use these files, remove the `.example` extension. Each file represents a different proxy behavior:
+
+   - **Auto-Proxy Rules**: Add rules to `auto-proxy.txt` to control how websites are accessed.
+
+   All files starting with `auto-proxy` and ending with `.txt` will be parsed as Auto-Proxy rules. If you have multiple Auto-Proxy rules, you can save them as multiple files, like `auto-proxy-1.txt`, `auto-proxy-2.txt`, etc.
+
+   **Note**: Currently, the URL matching rules in Auto-Proxy are ignored, and only domain rules are handled.
+
+   - **Blocked**: Domains added to `domain-rules-blocked.txt` will be blocked from access.
+   - **Direct**:
+     - Domains added to `domain-rules-direct.txt` will bypass the proxy and connect directly.
+     - IPv4 networks (in CIDR format) added to `ipv4-rules-direct.txt` will bypass the proxy and connect directly.
+     - IPv6 networks (in CIDR format) added to `ipv6-rules-direct.txt` will bypass the proxy and connect directly.
+   - **Proxy**: Domains added to `domain-rules-proxy.txt` will use the default proxy.
+
+   Add your domain names or IP network segments to the appropriate file, with one entry per line. Lines starting with `#` are treated as comments. For example:
+
+   Domains added to `domain-rules-direct.txt` will bypass the proxy and connect directly:
+   ```
+   # Direct connect domains
+   google.com
+   example.org
+   ```
+
+   IPv4 Networks added to `ipv4-rules-direct.txt` will bypass the proxy and connect directly:
+   ```
+   # Direct connect IPv4 networks
+   192.168.0.0/16
+   114.114.114.114/32 # To add a specific IP address, append /32 to the IP address
+   ```
+
+   You can also create your own custom rule files, following the format `<domain|ipv4|ipv6>-rules-<rule_name>.txt`. For example, `domain-rules-companyProxy.txt` will make all domains in this file use the `companyProxy` setting defined in `proxy.pac`. `ipv4-rules-block.txt` will block all networks listed in the file.
+
+2. **Generate the `proxy.pac` File**
+
+   Run the script to generate the `proxy.pac` file:
+
+   ```sh
+   ./build.sh
+   ```
+
+   The `proxy.pac` file will be automatically generated in the project root directory.
+
+3. **Default Rule Sources**
+
+   The build script [`build.sh`](./build.sh) will, by default, download the following files without overwriting existing files of the same name:
+
+   - `auto-proxy.txt`
+   - `ipv4-rules-direct.txt`
+   - `ipv6-rules-direct.txt`
+
+   If you do not need the Auto-Proxy rules or IP networks rules, you can create empty files with the same name to skip the download.
+
+4. **Proxy Configuration**
+
+   The generated `proxy.pac` file uses the following default proxy configurations (note that the default proxy server is `SOCKS5 127.0.0.1:1080`):
+
+   ```javascript
+   var proxyBehaviors = {
+     proxy: "SOCKS5 127.0.0.1:1080", // Default proxy
+     direct: DIRECT,
+     blocked: "PROXY 0.0.0.0:0",
+     "http_proxy": "PROXY 127.0.0.1:3128",
+     "companyProxy": "PROXY 192.168.1.1:8080", // Domains in `domain-rules-companyProxy.txt` will use this proxy setting
+   };
+   ```
+
+   You can modify these values after generating `proxy.pac`, or customize them directly in the original script `proxy.js` to use different default settings. Please adjust these settings according to your environment and requirements.
+
+5. **Testing**
+
+   If you have Node.js installed, you can run the following command to test and verify the configuration:
+
+   ```sh
+   node proxy.pac test
+   ```
+
+   The test code is located at the end of the `proxy.pac` file, for example:
+
+   ```javascript
+   assertVisitHostWithProxy("com.google");
+   assertVisitHostWithProxy("domains.google");
+   assertHostWithDefaultAction("www.not-google");
+   assertDirectHost("10.3.4.5");
+   assertDirectHost("114.114.114.114");
+   assertBlockedHost("www.whitehouse.com");
+   ```
+
+## Example
+
+To add a domain that needs to be blocked, simply edit the `domain-rules-blocked.txt` file:
+
+```
+# Blocked domains
+example.com
+ads.example.net
+```
+
+Run `./build.sh` to regenerate the `proxy.pac` file, which will block access to `example.com` and `ads.example.net`.
+
+# 中文介绍
+
 这个项目用来生成代理自动配置 `proxy.pac` 文件，可以用于配置浏览器或系统级的代理设置。
 
 支持路由代理流量：你可以自定义规则，根据配置文件中指定的域名或者 IP 网络段来路由流量到不同的代理服务器。
