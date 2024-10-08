@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
 IFS='.' read -r __major __minor _ <<< "${BASH_VERSION:-0.0.0}"
 if [ "$__major" -lt 4 ] || { [ "$__major" -eq 4 ] && [ "$__minor" -lt 3 ]; }; then
@@ -9,6 +8,9 @@ if [ "$__major" -lt 4 ] || { [ "$__major" -eq 4 ] && [ "$__minor" -lt 3 ]; }; th
     "$BASH" --version >&2
     exit 1
 fi
+
+set -euo pipefail
+shopt -s nullglob
 
 cd "$(dirname "$0")"
 
@@ -233,7 +235,6 @@ generate_pac() {
 
 is_up_to_date=true
 files_to_be_deleted=(proxy.pac)
-shopt -s nullglob
 for file in "$0" *.js *.txt; do
     if [ "$file" -nt proxy.pac ]; then
         is_up_to_date=false
