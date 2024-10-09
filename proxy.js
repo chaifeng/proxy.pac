@@ -89,6 +89,12 @@ const proxyRules = {
   // end of proxy rules
 };
 
+const domainRegexpRules = [
+  [ /^adservice\.google\.([a-z]{2}|com?)(\.[a-z]{2})?$/, blocked], // adservice.google.com.xx
+  // begin of regexp rules
+  // end of regexp rules
+]
+
 class IPv4TrieNode {
   constructor() {
     this.children = [null, null]; // 0 and 1
@@ -272,7 +278,8 @@ function printMatchingNetwork(ip, networks4, networks6) {
     return null;
   }
 }
-function FindProxyForURL(url, host) {
+function FindProxyForURL(_url, _host) {
+  const host = _host;
   if (isIpAddress(host)) {
     const match = findMatchingNetwork(host);
     if(match) {
@@ -286,17 +293,23 @@ function FindProxyForURL(url, host) {
     }
   }
 
+  const match = domainRegexpRules.find(([regexp, value]) => regexp.test(host) );
+  if(match)
+    return proxyBehaviors[match[1]] || default_behavior;
+
+  var host_segment = host;
   while (true) {
-    var action = proxyRules[host];
+    var action = proxyRules[host_segment];
     if (action !== undefined) {
       return proxyBehaviors[action] || default_behavior;
     }
-    var nextDot = host.indexOf(".");
+    var nextDot = host_segment.indexOf(".");
     if (nextDot === -1) {
       break;
     }
-    host = host.substring(nextDot + 1);
+    host_segment = host_segment.substring(nextDot + 1);
   }
+
   var remote_ip = undefined;
   if(typeof dnsResolveEx == 'function') {
     remote_ip = dnsResolveEx(host);
@@ -355,6 +368,7 @@ if (typeof process !== 'undefined' && process.argv.includes('test')) {
     assertDirectHost("127.3.4.5");
     assertDirectHost("114.114.114.114");
     assertBlockedHost("www.whitehouse.com");
+    assertBlockedHost("adservice.google.com.xx")
   }
 
   runTests();

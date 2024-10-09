@@ -1,0 +1,8 @@
+[direct]
+^.+-mihayo\.akamaized\.net$
+^a[1-5]\.mzstatic\.com$
+^cdn(-cn)?[1-4]?\.apple-mapkit\.com$
+^cl[1-5]-cdn\.origin-apple\.com\.akadns\.net$
+
+[block]
+^speed\.(coe|open)\.ad\.[a-z]{2,6}\.prod\.hosts\.ooklaserver\.net$

@@ -12,7 +12,7 @@ For high-performance matching: Uses a hash table for domain rules, and an IP pre
 
 ## Usage
 
-1. **Domain Rule Configuration**
+### 1. **Domain Rule Configuration**
 
    The project contains some example configuration files:
 
@@ -25,11 +25,15 @@ For high-performance matching: Uses a hash table for domain rules, and an IP pre
 
    To use these files, remove the `.example` extension. Each file represents a different proxy behavior:
 
+#### a. Auto-Proxy
+
    - **Auto-Proxy Rules**: Add rules to `auto-proxy.txt` to control how websites are accessed.
 
    All files starting with `auto-proxy` and ending with `.txt` will be parsed as Auto-Proxy rules. If you have multiple Auto-Proxy rules, you can save them as multiple files, like `auto-proxy-1.txt`, `auto-proxy-2.txt`, etc.
 
    **Note**: Currently, the URL matching rules in Auto-Proxy are ignored, and only domain rules are handled.
+
+#### b. Domain and IP Address
 
    - **Blocked**: Domains added to `domain-rules-blocked.txt` will be blocked from access.
    - **Direct**:
@@ -38,11 +42,14 @@ For high-performance matching: Uses a hash table for domain rules, and an IP pre
      - IPv6 networks (in CIDR format) added to `ipv6-rules-direct.txt` will bypass the proxy and connect directly.
    - **Proxy**: Domains added to `domain-rules-proxy.txt` will use the default proxy.
 
-   Add your domain names or IP network segments to the appropriate file, with one entry per line. Lines starting with `#` are treated as comments. For example:
+   Add your domains or IP networks to the appropriate file, one per line. Subdomains will inherit the proxy behavior of their parent domain. You can also add country-level top domains to simplify the configuration. Lines starting with `#` are treated as comments.
+
+   For example:
 
    Domains added to `domain-rules-direct.txt`, along with their subdomains,  will bypass the proxy and connect directly:
    ```
    # Direct connect domains
+   cn # All domains ending with .cn will connect directly by default
    google.com
    example.org
    ```
@@ -56,7 +63,43 @@ For high-performance matching: Uses a hash table for domain rules, and an IP pre
 
    You can also create your own custom rule files, following the format `<domain|ipv4|ipv6>-rules-<rule_name>.txt`. For example, `domain-rules-companyProxy.txt` will make all domains in this file use the `companyProxy` setting defined in `proxy.pac`. `ipv4-rules-block.txt` will block all networks listed in the file.
 
-2. **Generate the `proxy.pac` File**
+#### c. Domain Regular Expressions
+
+   - **Domain Regular Expressions**: `domain-regexp.txt` is used to define domain rules based on regular expressions, which allows for flexible matching of similar domains.
+
+   File structure:
+   ```
+   [direct]
+   # host regex ...
+
+   [blocked]
+   # ...
+
+   [proxy]
+   # ...
+   ```
+
+   Each section represents a different proxy behavior, which can be `direct`, `blocked`, `proxy`, or a custom behavior (e.g., `[companyProxy]`).
+
+   - **[direct]**: Domains matched by regular expressions in this section will bypass the proxy and connect directly.
+   - **[blocked]**: Domains matched by regular expressions in this section will be blocked.
+   - **[proxy]**: Domains matched by regular expressions in this section will use the default proxy.
+   - **Custom Behavior**: You can add your own section name, such as `[companyProxy]`, to indicate that domains matching those patterns will use a custom proxy configuration.
+
+   Each line is a regular expression for matching specific domains or their subdomains. Lines starting with `#` are treated as comments. For example:
+   ```
+   [direct]
+   # Direct connection domains
+   ^img-[0-9][0-9].*\.example\.com$
+
+   [blocked]
+   # Blocked domains
+   ^ad-[a-z0-9]\.cdn[0-9]\.example\.com$
+   ```
+
+   Ensure that the regular expressions are valid to avoid affecting normal network access.
+
+### 2. **Generate the `proxy.pac` File**
 
    Run the script to generate the `proxy.pac` file:
 
@@ -66,7 +109,7 @@ For high-performance matching: Uses a hash table for domain rules, and an IP pre
 
    The `proxy.pac` file will be automatically generated in the project root directory.
 
-3. **Default Rule Sources**
+### 3. **Default Rule Sources**
 
    The build script [`build.sh`](./build.sh) will, by default, download the following files without overwriting existing files of the same name:
 
@@ -76,7 +119,7 @@ For high-performance matching: Uses a hash table for domain rules, and an IP pre
 
    If you do not need the Auto-Proxy rules or IP networks rules, you can create empty files with the same name to skip the download.
 
-4. **Proxy Configuration**
+### 4. **Proxy Configuration**
 
    The generated `proxy.pac` file uses the following default proxy configurations (note that the default proxy server is `SOCKS5 127.0.0.1:1080`):
 
@@ -92,7 +135,7 @@ For high-performance matching: Uses a hash table for domain rules, and an IP pre
 
    You can modify these values after generating `proxy.pac`, or customize them directly in the original script `proxy.js` to use different default settings. Please adjust these settings according to your environment and requirements.
 
-5. **Testing**
+### 5. **Testing**
 
    If you have Node.js installed, you can run the following command to test and verify the configuration:
 
@@ -133,7 +176,7 @@ Run `./build.sh` to regenerate the `proxy.pac` file, which will block access to 
 
 ## 使用方法
 
-1. **域名规则配置**
+### 1. **域名规则配置**
 
    项目包含一些示例配置文件：
 
@@ -143,14 +186,19 @@ Run `./build.sh` to regenerate the `proxy.pac` file, which will block access to 
    - `domain-rules-proxy.txt.example`
    - `ipv4-rules-direct.txt.example`
    - `ipv6-rules-direct.txt.example`
+   - `domain-regexp.txt.example`
 
    要使用这些文件，去掉 `.example` 扩展名。每个文件代表不同的代理行为：
+
+#### a. Auto-Proxy
 
    - **Auto-Proxy 配置的规则**：把规则添加到 `auto-proxy.txt` 中，将会按照规则来访问网站。
 
    所有以 `auto-proxy` 开头，并且以 `.txt` 结尾的文件都按 Auto-Proxy 规则来解析。如果你有多个 Auto-Proxy 规则，可以保存为多个文件，例如 `auto-proxy-1.txt`、`auto-proxy-2.txt` 等等。
 
    **注意**：当前，会忽略 Auto-Proxy 中的 URL 的匹配规则，仅仅处理域名规则。
+
+#### b. 域名和IP地址
 
    - **Blocked**：添加到 `domain-rules-blocked.txt` 中的域名将被阻止访问。
    - **Direct**：
@@ -159,11 +207,14 @@ Run `./build.sh` to regenerate the `proxy.pac` file, which will block access to 
      - 添加到 `ipv6-rules-direct.txt` 中的 IPv6 网络段（CIDR格式）将绕过代理，直接连接。
    - **Proxy**：添加到 `domain-rules-proxy.txt` 中的域名将使用默认代理。
 
-   将你的域名或者IP网络段添加到合适的文件中，每个域名一行。以 `#` 开头的行被视为注释。例如：
+   将你的域名或者IP网络段添加到合适的文件中，每个域名一行。子域名会继承父域名的代理行为，可以直接添加国家顶级域，以简化配置。以 `#` 开头的行被视为注释。
+
+   例如：
 
    文件 domain-rules-direct.txt 中添加的域名及其子域名将会绕过代理直接连接
    ```
    # 直连域名
+   cn # 默认所有以 .cn 结尾的域名都是直连
    google.com
    example.org
    ```
@@ -177,8 +228,42 @@ Run `./build.sh` to regenerate the `proxy.pac` file, which will block access to 
 
    你也可以创建自己的自定义规则文件，文件名应遵循 `<domain|ipv4|ipv6>-rules-<rule_name>.txt` 的格式。例如，`domain-rules-companyProxy.txt` 将使该文件中的所有域名使用 `proxy.pac` 中定义的 `companyProxy` 设置。`ipv4-rules-block.txt` 将不可访问文件中的所有网络段。
 
+#### c. 域名正则表达式
 
-2. **生成 `proxy.pac` 文件**
+   - **域名正则表达式**：`domain-regexp.txt` 用于灵活地定义基于正则表达式的域名规则。主要用于匹配大量相似的域名规则。
+
+   文件结构如下：
+   ```
+   [direct]
+   # host regex ...
+
+   [blocked]
+   # ...
+
+   [proxy]
+   # ...
+   ```
+   每个分段的名称代表不同的代理行为，可以是 `direct`、`blocked`、`proxy`，或者你自定义的行为（例如 `[companyProxy]`）。
+
+   - **[direct]**：在这一分段中的域名正则表达式将绕过代理，直接连接。
+   - **[blocked]**：在这一分段中的域名正则表达式将被阻止访问。
+   - **[proxy]**：在这一分段中的域名正则表达式将使用默认代理进行连接。
+   - **自定义行为**：你可以新增自己的分段名称，例如 `[companyProxy]`，表示这些匹配的域名将使用自定义代理配置。
+
+   每一行是一个域名的正则表达式，可以通过灵活的正则规则来匹配特定的域名或其子域名。以 `#` 开头的行被视为注释。例如：
+   ```
+   [direct]
+   # 直连的域名
+   ^img-[0-9][0-9].*\.example\.com$
+
+   [blocked]
+   # 阻止访问的域名
+   ^ad-[a-z0-9]\.cdn[0-9]\.example\.com$
+   ```
+
+   确保正则表达式是有效的，以免影响正常的网络访问行为。
+
+### 2. **生成 `proxy.pac` 文件**
 
    运行脚本生成 `proxy.pac` 文件：
 
@@ -188,7 +273,7 @@ Run `./build.sh` to regenerate the `proxy.pac` file, which will block access to 
 
    在项目根目录中会自动生成 `proxy.pac` 文件。
 
-3. **默认的规则来源**
+### 3. **默认的规则来源**
    构建脚本 [`build.sh`](./build.sh) 默认会下载以下文件，但不会覆盖已有的同名文件：
 
    - `auto-proxy.txt`
@@ -197,7 +282,7 @@ Run `./build.sh` to regenerate the `proxy.pac` file, which will block access to 
 
    如果你不需要 Auto-Proxy 的规则或者 IP 网络段的规则，请创建同名的空文件即可忽略下载。
 
-4. **代理配置**
+### 4. **代理配置**
 
    生成的 `proxy.pac` 文件使用以下默认的代理配置（注意默认代理服务器是 `SOCKS5 127.0.0.1:1080`）：
 
@@ -213,7 +298,7 @@ Run `./build.sh` to regenerate the `proxy.pac` file, which will block access to 
 
    你可以在生成 `proxy.pac` 后修改这些值，或者直接在原始脚本 `proxy.js` 中进行自定义，以便使用不同的默认设置。请根据实际环境和需求调整这些代理设置。
 
-5. **测试**
+### 5. **测试**
 
    如果安装了 Node.js，可以使用以下命令运行测试以验证配置：
 

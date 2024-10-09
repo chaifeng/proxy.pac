@@ -230,7 +230,23 @@ generate_pac() {
         [[ "$rule" = @(blocked|direct|proxy) ]] || rule="\"$rule\""
         printf "  \"%s\": %s,\n" "$domain" "$rule"
     done | sort -n
-    sed -n '/ end of proxy rules$/,$p' "$jsfile"
+    sed -n '/ end of proxy rules$/,/ begin of regexp rules$/p' "$jsfile"
+    for file in domain-regexp*.txt; do
+        rule=""
+        while IFS= read -r line; do
+            line="${line%%#*}"
+            line="${line// }"
+            [[ -n "$line" ]] || continue
+            if [[ "$line" = \[*\] ]]; then
+                rule="${line#[}"
+                rule="${rule%]}"
+                [[ "$rule" = @(blocked|direct|proxy) ]] || rule="\"$rule\""
+            elif [[ -n "$rule" ]]; then
+                printf "  [/%s/, %s],\n" "$line" "$rule"
+            fi
+        done < "$file"
+    done
+    sed -n '/ end of regexp rules$/,$p' "$jsfile"
 }
 
 is_up_to_date=true
