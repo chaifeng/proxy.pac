@@ -24,7 +24,7 @@ function cleanup() {
     local retval="$?"
     local file
     for file in "${files_to_be_deleted[@]}"; do
-        if [[ -f "${file}" ]]; then
+        if [[ -e "${file}" ]]; then
             echo "Remove $file"
             rm -v "${file}"
         fi
@@ -35,7 +35,7 @@ trap cleanup EXIT ERR SIGINT
 
 for f in "${!files[@]}"; do
     url="${files[$f]}"
-    if [[ ! -f "$f" ]]; then
+    if [[ ! -e "$f" ]]; then
         files_to_be_deleted=("$f" "${f}.tmp")
         if command -v wget &>/dev/null; then
             wget -O "${f}.tmp" "$url"
@@ -190,6 +190,7 @@ generate_pac() {
     done
 
     sed -n '1,/ begin of ipv4 networks$/p' "$jsfile"
+
     for file in ipv4-rules-*.txt; do
         rule="${file#ipv?-rules-}"
         rule="${rule%%.*}"
@@ -198,14 +199,16 @@ generate_pac() {
             line="${line%%#*}"
             line="${line// }"
             echo "$rule: $line" >&2
-            while IFS=/ read ip prefix; do
+            while IFS=/ read -r ip prefix; do
                 while IFS=. read n1 n2 n3 n4; do
                     printf "  [0x%02x%02x%02x%02x, %s, %s], // %s\n" "${n1:-0}" "${n2:-0}" "${n3:-0}" "${n4:-0}" "$prefix" "$rule" "$line"
                 done <<< "$ip"
             done <<< "${line}";
         done < "$file"
     done | sort -n
+
     sed -n '/ end of ipv4 networks$/,/ begin of ipv6 networks$/p' "$jsfile"
+
     for file in ipv6-rules-*.txt; do
         rule="${file#ipv?-rules-}"
         rule="${rule%%.*}"
@@ -223,14 +226,18 @@ generate_pac() {
             echo "  [0x${full_hex:0:16}n, 0x${full_hex:16:16}n, ${prefix}, ${rule}], // ${line}"
         done < "$file"
     done | sort
+
     sed -n '/ end of ipv6 networks$/,/ begin of proxy rules$/p' "$jsfile"
+
     local domain
     for domain in "${!domain_rules[@]}"; do
         rule="${domain_rules[$domain]}"
         [[ "$rule" = @(blocked|direct|proxy) ]] || rule="\"$rule\""
         printf "  \"%s\": %s,\n" "$domain" "$rule"
     done | sort -n
+
     sed -n '/ end of proxy rules$/,/ begin of regexp rules$/p' "$jsfile"
+
     for file in domain-regexp*.txt; do
         rule=""
         while IFS= read -r line; do
@@ -246,6 +253,7 @@ generate_pac() {
             fi
         done < "$file"
     done
+
     sed -n '/ end of regexp rules$/,$p' "$jsfile"
 }
 
