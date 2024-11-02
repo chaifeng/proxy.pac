@@ -8,8 +8,6 @@ on:
       - '**/*.example'
       - '**/*.js'
       - '**/*.sh'
-  schedule:
-    - cron: "0 0 * * 0"
 
 permissions: write-all
 
